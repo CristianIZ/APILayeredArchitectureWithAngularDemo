@@ -1,0 +1,157 @@
+<div class="profile-container">
+  <!-- Header con título -->
+  <div class="page-header">
+    <h1>Mi Perfil</h1>
+  </div>
+
+  <div class="profile-content">
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <div mat-card-avatar class="profile-avatar">
+          <mat-icon>person</mat-icon>
+        </div>
+        <mat-card-title>{{currentUser?.username || 'Usuario'}}</mat-card-title>
+        <mat-card-subtitle>{{currentUser?.email}}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="profile-info">
+          <h3>Información Personal</h3>
+          <mat-divider></mat-divider>
+          
+          <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="profile-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="name" placeholder="Tu nombre completo">
+              <mat-error *ngIf="profileForm.get('name')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="profileForm.get('name')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="tu@email.com">
+              <mat-error *ngIf="profileForm.get('email')?.hasError('required')">
+                El email es requerido
+              </mat-error>
+              <mat-error *ngIf="profileForm.get('email')?.hasError('email')">
+                Ingresa un email válido
+              </mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-raised-button color="primary" type="submit" 
+                      [disabled]="profileForm.invalid || isUpdating">
+                <mat-spinner *ngIf="isUpdating" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="!isUpdating">save</mat-icon>
+                {{isUpdating ? 'Actualizando...' : 'Guardar Cambios'}}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <div class="password-section">
+          <h3>Cambiar Contraseña</h3>
+          <mat-divider></mat-divider>
+          
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Contraseña Actual</mat-label>
+              <input matInput [type]="hideCurrentPassword ? 'password' : 'text'" 
+                     formControlName="currentPassword" placeholder="Tu contraseña actual">
+              <button mat-icon-button matSuffix type="button" 
+                      (click)="hideCurrentPassword = !hideCurrentPassword">
+                <mat-icon>{{hideCurrentPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="passwordForm.get('currentPassword')?.hasError('required')">
+                La contraseña actual es requerida
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nueva Contraseña</mat-label>
+              <input matInput [type]="hideNewPassword ? 'password' : 'text'" 
+                     formControlName="newPassword" placeholder="Nueva contraseña">
+              <button mat-icon-button matSuffix type="button" 
+                      (click)="hideNewPassword = !hideNewPassword">
+                <mat-icon>{{hideNewPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('required')">
+                La nueva contraseña es requerida
+              </mat-error>
+              <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('minlength')">
+                La contraseña debe tener al menos 6 caracteres
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Confirmar Nueva Contraseña</mat-label>
+              <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" 
+                     formControlName="confirmPassword" placeholder="Confirma tu nueva contraseña">
+              <button mat-icon-button matSuffix type="button" 
+                      (click)="hideConfirmPassword = !hideConfirmPassword">
+                <mat-icon>{{hideConfirmPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="passwordForm.get('confirmPassword')?.hasError('required')">
+                Debes confirmar la nueva contraseña
+              </mat-error>
+              <mat-error *ngIf="passwordForm.hasError('passwordMismatch') && !passwordForm.get('confirmPassword')?.hasError('required')">
+                Las contraseñas no coinciden
+              </mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-raised-button color="accent" type="submit" 
+                      [disabled]="passwordForm.invalid || isChangingPassword">
+                <mat-spinner *ngIf="isChangingPassword" diameter="20"></mat-spinner>
+                <mat-icon *ngIf="!isChangingPassword">lock</mat-icon>
+                {{isChangingPassword ? 'Cambiando...' : 'Cambiar Contraseña'}}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <div class="account-section">
+          <h3>Configuración de Cuenta</h3>
+          <mat-divider></mat-divider>
+          
+          <div class="account-info">
+            <div class="info-item">
+              <mat-icon>calendar_today</mat-icon>
+              <div class="info-content">
+                <span class="info-label">Miembro desde</span>
+                <span class="info-value">{{getMemberSince()}}</span>
+              </div>
+            </div>
+            
+            <div class="info-item">
+              <mat-icon>verified_user</mat-icon>
+              <div class="info-content">
+                <span class="info-label">Estado de la cuenta</span>
+                <span class="info-value status-active">Activa</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="danger-zone">
+            <h4>Zona de Peligro</h4>
+            <p class="danger-text">
+              Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, ten cuidado.
+            </p>
+            <button mat-stroked-button color="warn" (click)="confirmDeleteAccount()">
+              <mat-icon>delete_forever</mat-icon>
+              Eliminar Cuenta
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

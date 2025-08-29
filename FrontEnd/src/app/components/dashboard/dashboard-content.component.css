@@ -1,0 +1,154 @@
+.dashboard-content {
+  padding: 0;
+}
+
+.welcome-section {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.welcome-section h1 {
+  font-size: 2.5rem;
+  font-weight: 300;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.welcome-section p {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+}
+
+.stats-card {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.stats-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.stats-content mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.stats-text {
+  text-align: center;
+}
+
+.stats-text h2 {
+  font-size: 2.5rem;
+  font-weight: 300;
+  margin: 0;
+  line-height: 1;
+}
+
+.stats-text p {
+  font-size: 1rem;
+  margin: 8px 0 0 0;
+  color: #666;
+}
+
+/* Card colors */
+.stats-card.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stats-card.total .stats-text p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stats-card.pending {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.stats-card.pending .stats-text p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stats-card.in-progress {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stats-card.in-progress .stats-text p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stats-card.completed {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+}
+
+.stats-card.completed .stats-text p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.recent-tasks-section {
+  margin-top: 32px;
+}
+
+.recent-tasks-section mat-card {
+  margin-bottom: 16px;
+}
+
+.task-date {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.no-tasks {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-tasks mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-tasks p {
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .welcome-section h1 {
+    font-size: 2rem;
+  }
+  
+  .stats-content {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .stats-content mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .stats-text h2 {
+    font-size: 2rem;
+  }
+}

@@ -1,0 +1,108 @@
+.sidenav-container {
+  height: 100vh;
+}
+
+.sidenav {
+  width: 250px;
+  background-color: #fafafa;
+  border-right: 1px solid #e0e0e0;
+}
+
+.sidenav-header {
+  padding: 20px 16px;
+  background-color: #3f51b5;
+  color: white;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sidenav-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.mat-mdc-list-item.active {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.mat-mdc-list-item.active .mat-icon {
+  color: #1976d2;
+}
+
+.main-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  margin-left: 8px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.user-info {
+  padding: 16px;
+  text-align: center;
+}
+
+.user-info p {
+  margin: 4px 0;
+}
+
+.main-content {
+  padding: 20px;
+  min-height: calc(100vh - 64px);
+  background-color: #fafafa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidenav {
+    width: 280px;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+}
+
+/* Material Design overrides */
+.mat-mdc-list-item {
+  height: 48px !important;
+  margin-bottom: 4px;
+  border-radius: 0 24px 24px 0;
+  margin-right: 8px;
+}
+
+.mat-mdc-list-item:hover {
+  background-color: #f0f0f0;
+}
+
+.mat-mdc-list-item .mat-icon {
+  margin-right: 16px;
+}

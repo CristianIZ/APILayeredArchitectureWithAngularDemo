@@ -1,0 +1,449 @@
+<div class="task-list-container">
+  <!-- Header con título y botón -->
+  <div class="page-header">
+    <h1>Mis Tareas</h1>
+    <button mat-raised-button color="primary" (click)="openCreateTaskDialog()">
+      <mat-icon>add</mat-icon>
+      Nueva Tarea
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filtros</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar</mat-label>
+          <input matInput formControlName="search" placeholder="Buscar por título o descripción">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="status" multiple>
+            <mat-option *ngFor="let status of taskStatuses" [value]="status.value">
+              {{status.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Prioridad</mat-label>
+          <mat-select formControlName="priority" multiple>
+            <mat-option *ngFor="let priority of taskPriorities" [value]="priority.value">
+              {{priority.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha límite desde</mat-label>
+          <input matInput [matDatepicker]="dueDateFromPicker" formControlName="dueDateFrom">
+          <mat-datepicker-toggle matSuffix [for]="dueDateFromPicker"></mat-datepicker-toggle>
+          <mat-datepicker #dueDateFromPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha límite hasta</mat-label>
+          <input matInput [matDatepicker]="dueDateToPicker" formControlName="dueDateTo">
+          <mat-datepicker-toggle matSuffix [for]="dueDateToPicker"></mat-datepicker-toggle>
+          <mat-datepicker #dueDateToPicker></mat-datepicker>
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-button type="button" (click)="clearFilters()">Limpiar</button>
+          <button mat-raised-button color="primary" type="button" (click)="applyFilters()">Aplicar</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="tasks-section">
+    <div class="view-controls">
+      <mat-button-toggle-group [(value)]="viewMode" (change)="onViewModeChange($event)">
+        <mat-button-toggle value="kanban">
+          <mat-icon>view_column</mat-icon>
+          Kanban
+        </mat-button-toggle>
+        <mat-button-toggle value="grid">
+          <mat-icon>grid_view</mat-icon>
+          Grid
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner></mat-spinner>
+    </div>
+
+    <div *ngIf="!isLoading && filteredTasks.length === 0" class="no-tasks">
+      <mat-icon>task_alt</mat-icon>
+      <h3>No hay tareas</h3>
+      <p>{{hasFilters ? 'No se encontraron tareas con los filtros aplicados' : 'Aún no tienes tareas creadas'}}</p>
+      <button mat-raised-button color="primary" (click)="openCreateTaskDialog()">
+        Crear primera tarea
+      </button>
+    </div>
+
+    <div *ngIf="!isLoading && filteredTasks.length > 0" class="kanban-board">
+      <div class="kanban-column">
+        <h3 class="column-header pending-header">
+          <mat-icon>schedule</mat-icon>
+          Pendientes
+          <mat-chip class="task-count">{{getPendingTasks().length}}</mat-chip>
+        </h3>
+        <div cdkDropList
+             [cdkDropListData]="getPendingTasks()"
+             class="task-list"
+             (cdkDropListDropped)="drop($event)"
+             [cdkDropListConnectedTo]="['inProgressList', 'completedList']">
+          <mat-card *ngFor="let task of getPendingTasks()" 
+                    cdkDrag
+                    class="task-card pending"
+                    [cdkDragData]="task">
+            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+            <mat-card-header>
+              <div mat-card-avatar [class]="getPriorityClass(task.priority)">
+                <mat-icon>{{getPriorityIcon(task.priority)}}</mat-icon>
+              </div>
+              <mat-card-title>{{task.title}}</mat-card-title>
+              <mat-card-subtitle>
+                <mat-chip [class]="getStatusClass(task.status)">{{getStatusLabel(task.status)}}</mat-chip>
+              </mat-card-subtitle>
+              <div class="task-actions">
+                <button mat-icon-button [matMenuTriggerFor]="taskMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #taskMenu="matMenu">
+                  <button mat-menu-item (click)="editTask(task)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="toggleTaskStatus(task)">
+                    <mat-icon>{{task.status === TaskStatus.Completed ? 'undo' : 'check'}}</mat-icon>
+                    <span>{{task.status === TaskStatus.Completed ? 'Marcar pendiente' : 'Marcar completada'}}</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteTask(task)" class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <p class="task-description">{{task.description}}</p>
+              
+              <div class="task-meta">
+                <div class="task-dates">
+                  <div *ngIf="task.dueDate" class="due-date" [class.overdue]="isOverdue(task)">
+                    <mat-icon>schedule</mat-icon>
+                    <span>{{task.dueDate | date:'short'}}</span>
+                  </div>
+                  <div class="created-date">
+                    <mat-icon>calendar_today</mat-icon>
+                    <span>Creada: {{task.createdAt | date:'short'}}</span>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <button mat-button (click)="editTask(task)">
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+              <button mat-button (click)="toggleTaskStatus(task)" color="primary">
+                <mat-icon>play_arrow</mat-icon>
+                Iniciar
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+
+      <div class="kanban-column">
+        <h3 class="column-header in-progress-header">
+          <mat-icon>play_circle</mat-icon>
+          En Progreso
+          <mat-chip class="task-count">{{getInProgressTasks().length}}</mat-chip>
+        </h3>
+        <div cdkDropList
+             id="inProgressList"
+             [cdkDropListData]="getInProgressTasks()"
+             class="task-list"
+             (cdkDropListDropped)="drop($event)"
+             [cdkDropListConnectedTo]="['pendingList', 'completedList']">
+          <mat-card *ngFor="let task of getInProgressTasks()" 
+                    cdkDrag
+                    class="task-card in-progress"
+                    [cdkDragData]="task">
+            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+            <mat-card-header>
+              <div mat-card-avatar [class]="getPriorityClass(task.priority)">
+                <mat-icon>{{getPriorityIcon(task.priority)}}</mat-icon>
+              </div>
+              <mat-card-title>{{task.title}}</mat-card-title>
+              <mat-card-subtitle>
+                <mat-chip [class]="getStatusClass(task.status)">{{getStatusLabel(task.status)}}</mat-chip>
+              </mat-card-subtitle>
+              <div class="task-actions">
+                <button mat-icon-button [matMenuTriggerFor]="taskMenu2">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #taskMenu2="matMenu">
+                  <button mat-menu-item (click)="editTask(task)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="toggleTaskStatus(task)">
+                    <mat-icon>{{task.status === TaskStatus.Completed ? 'undo' : 'check'}}</mat-icon>
+                    <span>{{task.status === TaskStatus.Completed ? 'Marcar pendiente' : 'Marcar completada'}}</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteTask(task)" class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <p class="task-description">{{task.description}}</p>
+              
+              <div class="task-meta">
+                <div class="task-dates">
+                  <div *ngIf="task.dueDate" class="due-date" [class.overdue]="isOverdue(task)">
+                    <mat-icon>schedule</mat-icon>
+                    <span>{{task.dueDate | date:'short'}}</span>
+                  </div>
+                  <div class="created-date">
+                    <mat-icon>calendar_today</mat-icon>
+                    <span>Creada: {{task.createdAt | date:'short'}}</span>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <button mat-button (click)="editTask(task)">
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+              <button mat-button (click)="toggleTaskStatus(task)" color="accent">
+                <mat-icon>check</mat-icon>
+                Completar
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+
+      <div class="kanban-column">
+        <h3 class="column-header completed-header">
+          <mat-icon>check_circle</mat-icon>
+          Completadas
+          <mat-chip class="task-count">{{getCompletedTasks().length}}</mat-chip>
+        </h3>
+        <div cdkDropList
+             id="completedList"
+             [cdkDropListData]="getCompletedTasks()"
+             class="task-list"
+             (cdkDropListDropped)="drop($event)"
+             [cdkDropListConnectedTo]="['pendingList', 'inProgressList']">
+          <mat-card *ngFor="let task of getCompletedTasks()" 
+                    cdkDrag
+                    class="task-card completed"
+                    [cdkDragData]="task">
+            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+            <mat-card-header>
+              <div mat-card-avatar [class]="getPriorityClass(task.priority)">
+                <mat-icon>{{getPriorityIcon(task.priority)}}</mat-icon>
+              </div>
+              <mat-card-title>{{task.title}}</mat-card-title>
+              <mat-card-subtitle>
+                <mat-chip [class]="getStatusClass(task.status)">{{getStatusLabel(task.status)}}</mat-chip>
+              </mat-card-subtitle>
+              <div class="task-actions">
+                <button mat-icon-button [matMenuTriggerFor]="taskMenu3">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #taskMenu3="matMenu">
+                  <button mat-menu-item (click)="editTask(task)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="toggleTaskStatus(task)">
+                    <mat-icon>undo</mat-icon>
+                    <span>Marcar pendiente</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteTask(task)" class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <p class="task-description">{{task.description}}</p>
+              
+              <div class="task-meta">
+                <div class="task-dates">
+                  <div *ngIf="task.dueDate" class="due-date">
+                    <mat-icon>schedule</mat-icon>
+                    <span>{{task.dueDate | date:'short'}}</span>
+                  </div>
+                  <div class="created-date">
+                    <mat-icon>calendar_today</mat-icon>
+                    <span>Creada: {{task.createdAt | date:'short'}}</span>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <button mat-button (click)="editTask(task)">
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+              <button mat-button (click)="toggleTaskStatus(task)" color="warn">
+                <mat-icon>undo</mat-icon>
+                Reabrir
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid view toggle -->
+    <div *ngIf="!isLoading && filteredTasks.length > 0 && showGridView" class="tasks-grid">
+      <mat-card *ngFor="let task of filteredTasks" class="task-card" [class]="getTaskCardClass(task.status)">
+        <mat-card-header>
+          <div mat-card-avatar [class]="getPriorityClass(task.priority)">
+            <mat-icon>{{getPriorityIcon(task.priority)}}</mat-icon>
+          </div>
+          <mat-card-title>{{task.title}}</mat-card-title>
+          <mat-card-subtitle>
+            <mat-chip [class]="getStatusClass(task.status)">{{getStatusLabel(task.status)}}</mat-chip>
+          </mat-card-subtitle>
+          <div class="task-actions">
+            <button mat-icon-button [matMenuTriggerFor]="taskMenu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #taskMenu="matMenu">
+              <button mat-menu-item (click)="editTask(task)">
+                <mat-icon>edit</mat-icon>
+                <span>Editar</span>
+              </button>
+              <button mat-menu-item (click)="toggleTaskStatus(task)">
+                <mat-icon>{{task.status === TaskStatus.Completed ? 'undo' : 'check'}}</mat-icon>
+                <span>{{task.status === TaskStatus.Completed ? 'Marcar pendiente' : 'Marcar completada'}}</span>
+              </button>
+              <button mat-menu-item (click)="deleteTask(task)" class="delete-action">
+                <mat-icon>delete</mat-icon>
+                <span>Eliminar</span>
+              </button>
+            </mat-menu>
+          </div>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <p class="task-description">{{task.description}}</p>
+          
+          <div class="task-meta">
+            <div class="task-dates">
+              <div *ngIf="task.dueDate" class="due-date" [class.overdue]="isOverdue(task)">
+                <mat-icon>schedule</mat-icon>
+                <span>{{task.dueDate | date:'short'}}</span>
+              </div>
+              <div class="created-date">
+                <mat-icon>calendar_today</mat-icon>
+                <span>Creada: {{task.createdAt | date:'short'}}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+        
+        <mat-card-actions>
+          <button mat-button (click)="editTask(task)">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </button>
+          <button mat-button (click)="toggleTaskStatus(task)" [color]="task.status === TaskStatus.Completed ? 'warn' : 'primary'">
+            <mat-icon>{{task.status === TaskStatus.Completed ? 'undo' : 'check'}}</mat-icon>
+            {{task.status === TaskStatus.Completed ? 'Deshacer' : 'Completar'}}
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showTaskDialog" class="task-dialog-overlay" (click)="closeTaskDialog()">
+  <div class="task-dialog" (click)="$event.stopPropagation()">
+    <h2>{{isEditMode ? 'Editar Tarea' : 'Nueva Tarea'}}</h2>
+    
+    <form [formGroup]="taskForm" (ngSubmit)="saveTask()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Título</mat-label>
+        <input matInput formControlName="title" placeholder="Título de la tarea">
+        <mat-error *ngIf="taskForm.get('title')?.hasError('required')">
+          El título es requerido
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descripción</mat-label>
+        <textarea matInput formControlName="description" rows="3" placeholder="Descripción de la tarea"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Prioridad</mat-label>
+        <mat-select formControlName="priority">
+          <mat-option *ngFor="let priority of taskPriorities" [value]="priority.value">
+            {{priority.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="status">
+          <mat-option *ngFor="let status of taskStatuses" [value]="status.value">
+            {{status.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Fecha límite</mat-label>
+        <input matInput [matDatepicker]="dueDatePicker" formControlName="dueDate">
+        <mat-datepicker-toggle matSuffix [for]="dueDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #dueDatePicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Categoría</mat-label>
+        <mat-select formControlName="categoryId">
+          <mat-option [value]="null">Sin categoría</mat-option>
+          <mat-option *ngFor="let category of categories" [value]="category.id">
+            {{category.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="dialog-actions">
+        <button mat-button type="button" (click)="closeTaskDialog()">Cancelar</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid || isSaving">
+          <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+          {{isEditMode ? 'Actualizar' : 'Crear'}}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+<div class="dashboard-content">
+  <div class="welcome-section">
+    <h1>¡Bienvenido, {{currentUser?.name}}!</h1>
+    <p>Aquí tienes un resumen de tus tareas</p>
+  </div>
+  
+  <mat-grid-list [cols]="(isHandset$ | async) ? 1 : 4" rowHeight="200px" gutterSize="16px">
+    <mat-grid-tile>
+      <mat-card class="stats-card total">
+        <mat-card-content>
+          <div class="stats-content">
+            <mat-icon>task_alt</mat-icon>
+            <div class="stats-text">
+              <h2>{{totalTasks}}</h2>
+              <p>Total de Tareas</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+    
+    <mat-grid-tile>
+      <mat-card class="stats-card pending">
+        <mat-card-content>
+          <div class="stats-content">
+            <mat-icon>pending_actions</mat-icon>
+            <div class="stats-text">
+              <h2>{{pendingTasksCount}}</h2>
+              <p>Pendientes</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+    
+    <mat-grid-tile>
+      <mat-card class="stats-card in-progress">
+        <mat-card-content>
+          <div class="stats-content">
+            <mat-icon>hourglass_empty</mat-icon>
+            <div class="stats-text">
+              <h2>{{inProgressTasksCount}}</h2>
+              <p>En Progreso</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+    
+    <mat-grid-tile>
+      <mat-card class="stats-card completed">
+        <mat-card-content>
+          <div class="stats-content">
+            <mat-icon>check_circle</mat-icon>
+            <div class="stats-text">
+              <h2>{{completedTasksCount}}</h2>
+              <p>Completadas</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </mat-grid-tile>
+  </mat-grid-list>
+  
+  <div class="recent-tasks-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Tareas Recientes</mat-card-title>
+        <mat-card-subtitle>Últimas 5 tareas creadas</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list *ngIf="recentTasks.length > 0; else noTasks">
+          <mat-list-item *ngFor="let task of recentTasks">
+            <mat-icon matListItemIcon [color]="getStatusColor(task.status)">{{getStatusIcon(task.status)}}</mat-icon>
+            <div matListItemTitle>{{task.title}}</div>
+            <div matListItemLine>{{task.description}}</div>
+            <div matListItemMeta>
+              <span class="task-date">{{task.createdAt | date:'short'}}</span>
+            </div>
+          </mat-list-item>
+        </mat-list>
+        <ng-template #noTasks>
+          <div class="no-tasks">
+            <mat-icon>task_alt</mat-icon>
+            <p>No tienes tareas aún</p>
+            <button mat-raised-button color="primary" routerLink="/tasks">Crear Primera Tarea</button>
+          </div>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions *ngIf="recentTasks.length > 0">
+        <button mat-button routerLink="/tasks">Ver Todas las Tareas</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

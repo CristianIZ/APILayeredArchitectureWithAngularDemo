@@ -1,0 +1,112 @@
+<div class="categories-container">
+  <!-- Header con título -->
+  <div class="page-header">
+    <h1><mat-icon>category</mat-icon> Gestión de Categorías</h1>
+    <p class="page-subtitle">Organiza tus tareas con categorías personalizadas</p>
+  </div>
+
+  <mat-card class="categories-card">
+    <mat-card-content>
+      <!-- Add Category Form -->
+      <div class="add-category-section">
+        <h3>Agregar Nueva Categoría</h3>
+        <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="category-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="name-field">
+              <mat-label>Nombre de la categoría</mat-label>
+              <input matInput formControlName="name" placeholder="Ej: Trabajo, Personal, Estudios">
+              <mat-error *ngIf="categoryForm.get('name')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="categoryForm.get('name')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="description-field">
+              <mat-label>Descripción (opcional)</mat-label>
+              <textarea matInput formControlName="description" 
+                       placeholder="Describe el propósito de esta categoría"
+                       rows="2"></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="color-field">
+              <mat-label>Color</mat-label>
+              <input matInput type="color" formControlName="color">
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button mat-raised-button color="primary" type="submit" 
+                    [disabled]="categoryForm.invalid || isSaving">
+              <mat-icon *ngIf="!isSaving">add</mat-icon>
+              <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+              {{ isEditMode ? 'Actualizar' : 'Agregar' }} Categoría
+            </button>
+            <button mat-button type="button" (click)="cancelEdit()" 
+                    *ngIf="isEditMode">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Categories List -->
+      <div class="categories-list-section">
+        <h3>Categorías Existentes</h3>
+        
+        <div *ngIf="isLoading" class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Cargando categorías...</p>
+        </div>
+
+        <div *ngIf="!isLoading && categories.length === 0" class="empty-state">
+          <mat-icon>category</mat-icon>
+          <h4>No hay categorías</h4>
+          <p>Crea tu primera categoría para organizar mejor tus tareas</p>
+        </div>
+
+        <mat-list *ngIf="!isLoading && categories.length > 0" class="categories-list">
+          <mat-list-item *ngFor="let category of categories" class="category-item">
+            <div class="category-content">
+              <div class="category-info">
+                <div class="category-color" [style.background-color]="category.color"></div>
+                <div class="category-details">
+                  <h4 class="category-name">{{ category.name }}</h4>
+                  <p class="category-description" *ngIf="category.description">
+                    {{ category.description }}
+                  </p>
+                  <div class="category-stats">
+                    <mat-chip-set>
+                      <mat-chip>{{ getTaskCount(category.id) }} tareas</mat-chip>
+                    </mat-chip-set>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="category-actions">
+                <button mat-icon-button [matMenuTriggerFor]="categoryMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #categoryMenu="matMenu">
+                  <button mat-menu-item (click)="editCategory(category)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Editar</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteCategory(category)" 
+                          [disabled]="getTaskCount(category.id) > 0">
+                    <mat-icon>delete</mat-icon>
+                    <span>Eliminar</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+            <mat-divider></mat-divider>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
